@@ -66,7 +66,7 @@
                     box.className = "tx_box";
                     box.style.width = side + "px";
                     box.style.height = side + "px";
-                    const intensity = Math.min(255, weight / 50);
+                    const intensity = Math.min(255, ((tx.fee / weight) / 1500));
                     box.style.background = `rgb(${intensity}, 80, 200)`;
                     box.textContent = weight;
                     container.appendChild(box);
