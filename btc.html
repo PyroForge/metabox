@@ -72,6 +72,9 @@
                     box.style.height = side + "px";
                     const intensity = Math.min(255, weight / 50);
                     box.style.background = `rgb(${intensity}, 80, 200)`;
+                    if (weight > 150000) {
+                        box.textContent = weight;
+                    }
                     container.appendChild(box);
                 });
             } catch (err) {
