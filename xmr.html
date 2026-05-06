@@ -67,7 +67,7 @@
                 if (tx_pool_count < old_tx_pool_count) {
                     audio_2.play();
                 }
-                old_tx_pool_count = tx_pool_count
+                old_tx_pool_count = tx_pool_count;
 
                 document.getElementById("display_height").innerHTML = "Height: <span class='display_status_color'>" + block_height + "</span>";
                 document.getElementById("display_last_block_hash").innerHTML = "Last block: <span class='display_status_color'>" + last_block_hash + "</span>";
