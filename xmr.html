@@ -46,6 +46,15 @@
         let new_total_size = 0
         let old_total_size = 0
         let old_block_height = 0;
+        let block_max_weight = 4000000;
+        function number_abbreviation_imperial(number) {
+            const imperial = ["", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No"];
+            return (number / Math.pow(1000, Math.floor(Math.log10(Math.abs(number)) / 3))) + imperial[Math.floor(Math.log10(Math.abs(number)) / 3)]
+        }
+        function number_abbreviation_metric(number) {
+            const metric = ["", "K", "M", "G", "T", "P", "E", "Z", "Y", "R", "Q"]
+            return (number / Math.pow(1000, Math.floor(Math.log10(Math.abs(number)) / 3))) + metric[Math.floor(Math.log10(Math.abs(number)) / 3)]
+        }
         async function status_update() {
             try {
                 status = (await (await fetch(node_url + "/json_rpc", { method: "POST", body: JSON.stringify({ jsonrpc: "2.0", id: "0", method: "get_info" }) })).json()).result;
@@ -57,6 +66,7 @@
                 const database_size = status.database_size;
                 const tx_count = status.tx_count;
                 const tx_pool_count = status.tx_pool_size;
+                block_max_weight = status.block_weight_limit;
 
                 // sounds checks
                 if (old_block_height < block_height) {
@@ -66,10 +76,10 @@
 
                 document.getElementById("display_height").innerHTML = "Height: <span class='display_status_color'>" + block_height + "</span>";
                 document.getElementById("display_last_block_hash").innerHTML = "Last block: <span class='display_status_color'>" + last_block_hash + "</span>";
-                document.getElementById("display_hash_rate_per_second").innerHTML ="Hash Rate: <span class='display_status_color'>" + hash_rate_per_second +"</span>";
+                document.getElementById("display_hash_rate_per_second").innerHTML ="Hash Rate: <span class='display_status_color'>" + number_abbreviation_metric(hash_rate_per_second) +"</span>";
                 document.getElementById("display_difficulty").innerHTML ="Difficulty: <span class='display_status_color'>" + difficulty + "</span>";
-                document.getElementById("display_database_size").innerHTML ="Database size: <span class='display_status_color'>" + database_size +"</span>";
-                document.getElementById("display_tx_count").innerHTML ="Tx count: <span class='display_status_color'>" + tx_count;
+                document.getElementById("display_database_size").innerHTML ="Database size: <span class='display_status_color'>" + number_abbreviation_metric(database_size) +"</span>";
+                document.getElementById("display_tx_count").innerHTML ="Tx count: <span class='display_status_color'>" + number_abbreviation_imperial(tx_count);
                 document.getElementById("display_tx_pool_count").innerHTML ="Meta pool (<span class='display_status_color'>" + tx_pool_count +"</span>):";
             }
             catch (err) {
@@ -89,7 +99,6 @@
                 new_total_size = 0
                 txs.forEach(tx => {
                     // CONFIG
-                    const block_max_weight = 300000
                     const tx_id = tx.id_hash;
                     const tx_weight = tx.weight;
                     const tx_size = tx.blob_size;
