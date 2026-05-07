@@ -45,8 +45,16 @@
         let old_tx_fee_min_ratio = 100000000
         let new_total_size = 0
         let old_total_size = 0
-        old_block_height = 0;
-
+        let old_block_height = 0;
+        let block_max_weight = 4000000;
+        function number_abbreviation_imperial(number) {
+            const imperial = ["", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No"];
+            return (number / Math.pow(1000, Math.floor(Math.log10(Math.abs(number)) / 3))) + imperial[Math.floor(Math.log10(Math.abs(number)) / 3)]
+        }
+        function number_abbreviation_metric(number) {
+            const metric = ["", "K", "M", "G", "T", "P", "E", "Z", "Y", "R", "Q"]
+            return (number / Math.pow(1000, Math.floor(Math.log10(Math.abs(number)) / 3))) + metric[Math.floor(Math.log10(Math.abs(number)) / 3)]
+        }
         async function status_update() {
             try {
                 status = (await (await fetch(node_url, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({jsonrpc: "2.0", id: 1, method: "getblockchaininfo", params: []}) })).json()).result;
@@ -56,7 +64,7 @@
                 const block_height = status.blocks;
                 const last_block_hash = status.bestblockhash;
                 const hash_rate_per_second = status.difficulty * 2**32 / 600;
-                const difficulty =  status.difficulty;
+                const difficulty = status.difficulty;
                 const database_size = status.size_on_disk;
                 const tx_count = txstats.txcount;
                 const tx_pool_count = mstats.size;
@@ -69,10 +77,10 @@
 
                 document.getElementById("display_height").innerHTML = "Height: <span class='display_status_color'>" + block_height + "</span>";
                 document.getElementById("display_last_block_hash").innerHTML = "Last block: <span class='display_status_color'>" + last_block_hash + "</span>";
-                document.getElementById("display_hash_rate_per_second").innerHTML ="Hash Rate: <span class='display_status_color'>" + hash_rate_per_second +"</span>";
+                document.getElementById("display_hash_rate_per_second").innerHTML ="Hash Rate: <span class='display_status_color'>" + number_abbreviation_metric(hash_rate_per_second) +"</span>";
                 document.getElementById("display_difficulty").innerHTML ="Difficulty: <span class='display_status_color'>" + difficulty + "</span>";
-                document.getElementById("display_database_size").innerHTML ="Database size: <span class='display_status_color'>" + database_size +"</span>";
-                document.getElementById("display_tx_count").innerHTML ="Tx count: <span class='display_status_color'>" + tx_count;
+                document.getElementById("display_database_size").innerHTML ="Database size: <span class='display_status_color'>" + number_abbreviation_metric(database_size) +"</span>";
+                document.getElementById("display_tx_count").innerHTML ="Tx count: <span class='display_status_color'>" + number_abbreviation_imperial(tx_count);
                 document.getElementById("display_tx_pool_count").innerHTML ="Meta pool (<span class='display_status_color'>" + tx_pool_count +"</span>):";
             }
             catch (err) {
@@ -92,18 +100,17 @@
                 new_total_size = 0
                 txs.forEach(tx => {
                     // CONFIG
-                    const block_max_weight = 4000000
                     const tx_id = "";
                     const tx_weight = tx.weight;
                     const tx_size = tx.vsize;
-                    const tx_fee = tx.fees.base * 100000000;
+                    const tx_fee = tx.fees.base;
                     
-                    const tx_fee_ratio = tx_fee / tx_size;
-                    if (tx_fee_ratio > new_tx_fee_max_ratio) {new_tx_fee_max_ratio = tx_fee_ratio;}
-                    if (tx_fee_ratio < new_tx_fee_min_ratio) {new_tx_fee_min_ratio = tx_fee_ratio;}
-                    new_total_fee_ratio = new_total_fee_ratio + tx_fee_ratio;
-                    new_total_size = new_total_size + tx_size;
-                    const tx_fee_avg_ratio = old_total_fee_ratio / txs.length;
+                    const tx_fee_ratio = tx_fee / tx_weight
+                    if (tx_fee_ratio > new_tx_fee_max_ratio) {new_tx_fee_max_ratio = tx_fee_ratio}
+                    if (tx_fee_ratio < new_tx_fee_min_ratio) {new_tx_fee_min_ratio = tx_fee_ratio}
+                    new_total_fee_ratio = new_total_fee_ratio + tx_fee_ratio
+                    new_total_size = new_total_size + tx_size
+                    const tx_fee_avg_ratio = old_total_fee_ratio / txs.length
 
                     const side = Math.sqrt(tx_weight) * 0.15;
                     const box = document.createElement("div");
@@ -112,26 +119,26 @@
                     box.style.height = side + "px";
                     let intensity = 0
                     if (tx_fee_ratio < tx_fee_avg_ratio) {
-                        intensity = (tx_fee_ratio - old_tx_fee_min_ratio) * 127 / (tx_fee_avg_ratio - old_tx_fee_min_ratio);
+                        intensity = (tx_fee_ratio - old_tx_fee_min_ratio) * 127 / (tx_fee_avg_ratio - old_tx_fee_min_ratio) 
                     }
                     else {
-                        intensity = (tx_fee_ratio - tx_fee_avg_ratio) * 127 / (old_tx_fee_max_ratio  - tx_fee_avg_ratio) + 127;
+                        intensity = (tx_fee_ratio - tx_fee_avg_ratio) * 127 / (old_tx_fee_max_ratio  - tx_fee_avg_ratio) + 127
                     }
                     if (old_tx_fee_min_ratio == old_tx_fee_max_ratio) {
-                        intensity = 0;
+                        intensity = 0
                     }
                     box.style.background = `rgb(${intensity}, 80, 200)`;
-                    if (tx_weight > 150000) {
+                    if (tx_weight > 75000) {
                         box.textContent = tx_weight;
                     }
                     document.getElementById("display_tx_pool").appendChild(box);
                     document.getElementById("display_fee").innerHTML ="Tx fee: <span class='display_status_color'>" + new_tx_fee_min_ratio.toFixed(2) + " AU/b " + tx_fee_avg_ratio.toFixed(2) + " AU/b " + new_tx_fee_max_ratio.toFixed(2) +" AU/b </span>";
                     document.getElementById("display_tx_pool_fill").innerHTML = "Size: <span class='display_status_color'>" + old_total_size + "</span>" + " Full blocks: <span class='display_status_color'>" + ((old_total_size / block_max_weight)*100).toFixed(2) + "%";
                 });
-                old_total_fee_ratio = new_total_fee_ratio;
-                old_tx_fee_max_ratio  = new_tx_fee_max_ratio;
-                old_tx_fee_min_ratio = new_tx_fee_min_ratio;
-                old_total_size = new_total_size;
+                old_total_fee_ratio = new_total_fee_ratio
+                old_tx_fee_max_ratio  = new_tx_fee_max_ratio
+                old_tx_fee_min_ratio = new_tx_fee_min_ratio 
+                old_total_size = new_total_size
             }
             catch (err) {
                 console.error(err);
