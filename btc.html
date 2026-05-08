@@ -107,7 +107,7 @@
                     const tx_size = tx.vsize;
                     const tx_fee = tx.fees.base * 100000000;
                     
-                    const tx_fee_ratio = tx_fee / tx_weight;
+                    const tx_fee_ratio = tx_fee / tx_size;
                     if (tx_fee_ratio > new_tx_fee_max_ratio) {new_tx_fee_max_ratio = tx_fee_ratio}
                     if (tx_fee_ratio < new_tx_fee_min_ratio) {new_tx_fee_min_ratio = tx_fee_ratio}
                     new_total_fee_ratio = new_total_fee_ratio + tx_fee_ratio
